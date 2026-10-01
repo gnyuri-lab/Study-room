@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block page_title %}Предпросмотр импорта{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Предпросмотр импорта: {{ file_name }}</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_groups.groups_list', course_id=course.id) }}">
+    К группам курса
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+<p class="alert alert-info" role="status">
+  Это предпросмотр: в базу пока не записано ни одной строки.
+  Принято строк: <strong>{{ counts.valid }}</strong> из {{ counts.total }}.
+  {% if counts.invalid %}
+    Строк с ошибками: {{ counts.invalid }} (причин: {{ counts.errors }}).
+  {% endif %}
+</p>
+
+<section class="card">
+  <h3>Подтверждение</h3>
+  <p class="muted">
+    В базу попадут только принятые строки. Отклонённые строки будут
+    перечислены в отчёте об импорте вместе с причинами.
+  </p>
+  <div class="form-actions">
+    <form class="inline-form" method="post"
+          action="{{ url_for('admin_import.import_confirm', course_id=course.id) }}"
+          data-confirm="Записать принятые строки ({{ counts.valid }}) в курс «{{ course.title }}»?">
+      <button class="button" type="submit">Подтвердить импорт</button>
+    </form>
+    <form class="inline-form" method="post"
+          action="{{ url_for('admin_import.import_cancel', course_id=course.id) }}">
+      <button class="button button-secondary" type="submit">Отменить</button>
+    </form>
+  </div>
+</section>
+
+<ul class="plain-list card-list">
+  {% for row in verdicts %}
+    <li class="card-row">
+      <div class="card-row-main">
+        <p class="card-row-title">
+          Строка {{ row.row_number }}: {{ row.values.full_name }}
+          {% if row.accepted %}
+            <span class="status-badge status-accepted">Принята</span>
+          {% else %}
+            <span class="status-badge status-rejected">Отклонена</span>
+          {% endif %}
+        </p>
+        <p class="muted">
+          роль — {{ row.values.role or '—' }},
+          группа — {{ row.values.group or '—' }},
+          e-mail — {{ row.values.email or '—' }}
+        </p>
+        {% if row.errors %}
+          <ul class="consequence-list">
+            {% for error in row.errors %}
+              <li>{{ error.text }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

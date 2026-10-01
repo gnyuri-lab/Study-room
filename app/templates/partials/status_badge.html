@@ -1,0 +1,20 @@
+{# Значок статуса работы. Код статуса приходит из базы (Д-10: «не сдано»
+   хранится как отсутствие строки), подпись берётся из STATUSES, а цвет —
+   из CSS-класса `status-<код>`: у «сдано после дедлайна» он свой,
+   оранжевый, чтобы принятая с опозданием работа не сливалась с
+   принятой вовремя. #}
+{% set _status_class = {
+  'not_submitted': 'status-not_submitted',
+  'submitted': 'status-submitted',
+  'revision': 'status-revision',
+  'accepted': 'status-accepted',
+  'accepted_late': 'status-accepted_late'
+} %}
+{% if status in STATUSES %}
+  <span class="status-badge {{ _status_class.get(status, 'status-not_submitted') }}">
+    {{ STATUSES[status].label }}
+  </span>
+{% else %}
+  {# Неизвестный код не должен молча выглядеть как обычный статус. #}
+  <span class="status-badge status-not_submitted">—</span>
+{% endif %}

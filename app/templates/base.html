@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block page_title %}{{ page_title|default('Стартовая страница') }}{% endblock %} — {{ APP_TITLE }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+
+  <header class="app-header">
+    <div class="container header-inner">
+      <p class="brand">{{ APP_NAME }} <span class="brand-sep">/</span> Учебный кабинет</p>
+      {% if current_user %}
+        <p class="user-badge">
+          {{ current_user['full_name'] }} · {{ ROLES[current_user['role']].label }}
+        </p>
+        {% if request.path != '/' %}
+          {# Возврат на главную с любого рабочего экрана — и администратора,
+             и куратора, и студента. На самом кабинете ссылка не нужна. #}
+          <a class="button button-secondary header-home"
+             href="{{ url_for('index') }}">
+            {% if current_user['role'] == 'admin' %}В кабинет{% else %}В личный кабинет{% endif %}
+          </a>
+        {% endif %}
+        <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}">
+          <button class="button button-secondary" type="submit">Выйти</button>
+        </form>
+      {% else %}
+        <p class="stage-badge">Этап {{ STAGE }} · версия {{ APP_VERSION }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="container" id="main" tabindex="-1">
+    <h1>{% block heading %}{{ self.page_title() }}{% endblock %}</h1>
+    {# Flash-сообщения читаются здесь, в базовом шаблоне: get_flashed_messages
+       работает как очередь и при втором вызове возвращает пустое. Поэтому
+       страницы разделов подключают partials/flash_messages.html только ради
+       переменной error, а текст действия уже показан выше. #}
+    {% set empty_key = '' %}
+    {% include "partials/flash_messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer">
+    <div class="container">
+      <p class="muted">Локальный учебный кабинет. Данные хранятся только на этом компьютере.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/attachments.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/password-toggle.js') }}" defer></script>
+  {# Фильтры и связанная подсветка дашборда (Э-7): на страницах без
+     дашборда скрипты находят пустой набор узлов и ничего не делают. #}
+  <script src="{{ url_for('static', filename='js/filters.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+</body>
+</html>

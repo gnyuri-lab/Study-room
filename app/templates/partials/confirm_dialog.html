@@ -1,0 +1,35 @@
+{# Состояние «Подтверждение действия» из §9.1: перечень последствий и
+   поле подтверждения. Обязательные параметры: action_url (куда
+   отправлять), confirm_label (текст кнопки), consequences (список
+   строк-перечислений). Необязательные: expected_title — тогда
+   показывается поле ввода названия и кнопка не сработает, пока текст
+   не совпадёт; confirm_note — пояснение под полем. #}
+<section class="card confirm-card">
+  <h2>Подтверждение</h2>
+  {% if consequence_intro %}
+    <p class="alert alert-error" role="alert">{{ consequence_intro }}</p>
+  {% endif %}
+  {% if consequences %}
+    <ul class="consequence-list">
+      {% for line in consequences %}
+        <li>{{ line }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post" action="{{ action_url }}">
+    {% if expected_title %}
+      <div class="form-field">
+        <label class="form-label" for="confirmation">
+          Введите название курса для подтверждения
+        </label>
+        <input class="form-input" id="confirmation" name="confirmation" type="text"
+               value="{{ typed|default('') }}" required autocomplete="off">
+        {% if confirm_note %}<p class="form-hint">{{ confirm_note }}</p>{% endif %}
+      </div>
+    {% endif %}
+    <div class="form-actions">
+      <button class="button button-danger" type="submit">{{ confirm_label }}</button>
+      <a class="button button-secondary" href="{{ cancel_url }}">Отмена</a>
+    </div>
+  </form>
+</section>

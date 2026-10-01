@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block page_title %}Импорт списка{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ course.title }}: импорт списка</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_groups.groups_list', course_id=course.id) }}">
+    К группам курса
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+{% if error %}
+  <p class="alert alert-error" role="alert">{{ error }}</p>
+{% endif %}
+
+<section class="card">
+  <h3>Загрузить список из файла</h3>
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('admin_import.import_upload', course_id=course.id) }}"
+        novalidate>
+    <div class="form-field">
+      <label class="form-label" for="roster-file">Файл со списком</label>
+      <input class="form-input" id="roster-file" name="file" type="file"
+             accept=".xlsx,.csv" required>
+      <p class="form-hint">
+        Форматы — .xlsx и .csv. Первая строка файла: заголовки столбцов
+        «ФИО», «роль», «группа», «e-mail», «пароль». Роль — «студент»
+        или «куратор», регистр и лишние пробелы не важны. Лишние
+        столбцы, в том числе служебный столбец с суффиксом пароля,
+        игнорируются. Несуществующие группы создаются автоматически.
+      </p>
+    </div>
+    <div class="form-actions">
+      <button class="button" type="submit">Загрузить и показать предпросмотр</button>
+    </div>
+  </form>
+  <p class="form-hint">
+    Сначала показывается предпросмотр с вердиктом по каждой строке.
+    До подтверждения в базу не записывается ни одной строки.
+  </p>
+</section>
+
+{% if latest %}
+  <section class="card">
+    <h3>Последний импорт</h3>
+    <p class="card-row-title">{{ latest.file_name }}</p>
+    <p class="muted">
+      {{ latest.created_at }} · принято строк: {{ latest.valid_rows }} из
+      {{ latest.total_rows }}
+    </p>
+    {% if latest_errors %}
+      <ul class="consequence-list">
+        {% for item in latest_errors %}
+          <li>
+            Строка {{ item.row_number }} — {{ item.field }}:
+            {{ item.error_text }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Ошибок нет.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+{% if batches|length > 1 %}
+  <section class="card">
+    <h3>История импортов курса</h3>
+    <ul class="plain-list card-list">
+      {% for batch in batches %}
+        <li class="card-row">
+          <div class="card-row-main">
+            <p class="card-row-title">{{ batch.file_name }}</p>
+            <p class="muted">
+              {{ batch.created_at }} · принято строк:
+              {{ batch.valid_rows }} из {{ batch.total_rows }}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endblock %}

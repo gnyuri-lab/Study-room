@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block page_title %}Удаление задания{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Удаление задания</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_assignments.assignment_edit', course_id=course.id, assignment_id=assignment.id) }}">
+    К заданию
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+{% if error %}
+  <p class="alert alert-error" role="alert">{{ error }}</p>
+{% endif %}
+
+<section class="card">
+  <p class="card-row-title">{{ assignment.title }}</p>
+
+  {% if will_archive %}
+    <p class="alert alert-info" role="status">
+      По заданию есть сдачи, поэтому оно не удаляется, а переносится
+      в архив: работы, комментарии и файлы сохраняются (BR-23).
+    </p>
+  {% else %}
+    <p class="alert alert-info" role="status">
+      По заданию нет ни одной сдачи, поэтому оно будет удалено
+      полностью вместе с материалами (BR-24). Восстановить его будет
+      нельзя.
+    </p>
+  {% endif %}
+
+  <h3>Последствия</h3>
+  <ul class="consequence-list">
+    {% if will_archive %}
+      <li>Задание исчезнет из списка заданий курса и из списка студента.</li>
+      <li>Сдачи ({{ submissions }}) и комментарии к ним сохранятся и останутся доступны администратору.</li>
+      {% if files %}<li>Материалы ({{ files }}) сохранятся.</li>{% endif %}
+    {% else %}
+      <li>Задание будет удалено из базы безвозвратно.</li>
+      {% if files %}<li>Материалы ({{ files }}) будут удалены вместе с заданием.</li>{% endif %}
+      <li>Запись в журнале действий останется.</li>
+    {% endif %}
+  </ul>
+
+  <form method="post" novalidate>
+    <div class="checkbox-row">
+      <input id="confirm" name="confirm" type="checkbox" required>
+      <label class="form-label" for="confirm">
+        Подтверждаю {% if will_archive %}перенос в архив{% else %}удаление{% endif %}.
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="button button-danger" type="submit">
+        {% if will_archive %}В архив{% else %}Удалить{% endif %}
+      </button>
+      <a class="button button-secondary"
+         href="{{ url_for('admin_assignments.assignments_list', course_id=course.id) }}">
+        Отмена
+      </a>
+    </div>
+  </form>
+</section>
+{% endblock %}

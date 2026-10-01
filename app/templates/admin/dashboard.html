@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block page_title %}Дашборд администратора{% endblock %}
+{% block content %}
+{# Четыре разреза FR-60 различаются только подписью первой колонки,
+   поэтому один макрос рисует все четыре: пять колонок статусов и
+   «Всего» не должны расходиться между разрезами. Макрос видит только
+   аргументы и глобальные переменные Jinja, поэтому текст пустого
+   состояния передаётся явно. #}
+{% macro breakdown_table(title, caption, rows, empty_text) %}
+<section class="card">
+  <h3>{{ title }}</h3>
+  {% if rows %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">{{ caption }}</th>
+          {% for code in STATUS_ORDER %}
+            <th scope="col">{{ STATUSES[code].label }}</th>
+          {% endfor %}
+          <th scope="col">Всего</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td data-label="{{ caption }}">{{ row.label }}</td>
+            {% for code in STATUS_ORDER %}
+              <td data-label="{{ STATUSES[code].label }}">{{ row.counts[code] }}</td>
+            {% endfor %}
+            <td data-label="Всего">{{ row.total }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">{{ empty_text }}</p>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{# Процент в русской записи: запятая вместо точки и одна десятая. #}
+{% macro percent(value, total) %}{{ ('%.1f' | format(value * 100.0 / total)).replace('.', ',') }}{% endmacro %}
+
+{# Текст пустого состояния зависит от того, стоят ли фильтры: с
+   фильтрами пусто — это результат выборки, без фильтров — данных нет
+   вовсе (§9.2). #}
+{% set empty_text = EMPTY_STATES['dashboard_filtered'] if dashboard.filtered else EMPTY_STATES['dashboard'] %}
+
+<div class="page-head">
+  <h2>{{ dashboard.scope_title }}</h2>
+</div>
+
+{% include "partials/filters.html" %}
+
+{% if dashboard.filter_error %}
+  <p class="alert alert-error" role="alert">{{ MESSAGES['dashboard_filter_invalid'] }}</p>
+{% endif %}
+
+{% if not dashboard.has_data %}
+  {% set empty_key = 'dashboard_filtered' if dashboard.filtered else 'dashboard' %}
+  {% set action_url = '' %}
+  {% set action_label = '' %}
+  {% include "partials/empty_state.html" %}
+{% else %}
+  {# Сводка (FR-55): четыре числа по текущей выборке, то есть с учётом
+     применённых фильтров. Считаются они из тех же пар «студент ×
+     задание», что и разрезы ниже, поэтому «Студентов» и «Заданий»
+     не может разойтись с таблицами прогресса. #}
+  <section class="card">
+    <h3>Сводные показатели</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <p class="summary-value">{{ dashboard.summary.students }}</p>
+        <p class="summary-label">Студентов</p>
+      </div>
+      <div class="summary-item">
+        <p class="summary-value">{{ dashboard.summary.assignments }}</p>
+        <p class="summary-label">Заданий</p>
+      </div>
+      <div class="summary-item">
+        <p class="summary-value">{{ dashboard.summary.works }}</p>
+        <p class="summary-label">Работ</p>
+      </div>
+      <div class="summary-item">
+        <p class="summary-value">{{ dashboard.summary.accepted }}</p>
+        <p class="summary-label">Сдано</p>
+      </div>
+    </div>
+    <p class="form-hint">
+      «Работ» — это пары «студент × задание»: у каждой пары ровно один
+      статус, поэтому сумма по пяти статусам равна этому числу.
+    </p>
+  </section>
+
+  {# Диаграмма и числа считаются из одного словаря counts, поэтому
+     разойтись не могут (FR-57, чек-лист §11). #}
+  <section class="card">
+    <h3>Распределение работ по статусам</h3>
+    {% if dashboard.chart %}
+      {{ dashboard.chart }}
+      <table class="data-table status-table">
+        <thead>
+          <tr>
+            <th scope="col">Статус</th>
+            <th scope="col">Работ</th>
+            <th scope="col">Доля</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for code in STATUS_ORDER %}
+            <tr data-status="{{ code }}">
+              <td data-label="Статус">
+                {% set status = code %}
+                {% include "partials/status_badge.html" with context %}
+              </td>
+              <td data-label="Работ">{{ dashboard.counts[code] }}</td>
+              <td data-label="Доля">{{ percent(dashboard.counts[code], dashboard.total) }} %</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="form-hint">
+        Наведите на полосу диаграммы — строка с тем же статусом подсветится.
+      </p>
+    {% endif %}
+  </section>
+
+  {{ breakdown_table('Прогресс по курсам', 'Курс',
+                     dashboard.breakdowns.course, empty_text) }}
+  {{ breakdown_table('Прогресс по группам', 'Группа',
+                     dashboard.breakdowns.group, empty_text) }}
+  {{ breakdown_table('Прогресс по заданиям', 'Задание',
+                     dashboard.breakdowns.assignment, empty_text) }}
+  {{ breakdown_table('Прогресс по студентам', 'Студент',
+                     dashboard.breakdowns.student, empty_text) }}
+
+  {# Таблица успеваемости (FR-59): только ФИО, группа, задание,
+     дедлайн и статус. Дата дедлайна подсвечена красным (класс
+     deadline), «не задан» остаётся приглушённым. E-mail и пароли
+     сюда не попадают — сервис их не читает (AC-17, AC-22). #}
+  <section class="card">
+    <h3>Таблица успеваемости</h3>
+    <table class="data-table performance-table">
+      <thead>
+        <tr>
+          <th scope="col">ФИО</th>
+          <th scope="col">Группа</th>
+          <th scope="col">Задание</th>
+          <th scope="col" class="deadline">Дедлайн</th>
+          <th scope="col">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in dashboard.rows %}
+          <tr>
+            <td data-label="ФИО">{{ row.student_name }}</td>
+            <td data-label="Группа">{{ row.group_label }}</td>
+            <td data-label="Задание">
+              {{ row.assignment_title }}
+              {% if row.is_archived %}
+                <span class="muted">(архив)</span>
+              {% endif %}
+            </td>
+            <td class="deadline" data-label="Дедлайн">
+              {% if row.due_label %}{{ row.due_label }}{% else %}<span class="muted">не задан</span>{% endif %}
+            </td>
+            <td data-label="Статус">
+              {% set status = row.status %}
+              {% include "partials/status_badge.html" with context %}
+              {% if row.submission_id %}
+                <a class="button button-secondary"
+                   href="{{ url_for('curator.submission_card',
+                                    submission_id=row.submission_id) }}">
+                  Открыть работу
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="form-hint">
+      «Не сдано» — работа ещё не создана: она числится здесь, но строки
+      в журнале сдач под ней нет.
+    </p>
+  </section>
+{% endif %}
+{% endblock %}

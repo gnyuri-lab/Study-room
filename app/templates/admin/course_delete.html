@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block page_title %}Удаление курса{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Удаление курса</h2>
+  <a class="button button-secondary" href="{{ url_for('admin_courses.courses_list') }}">
+    К списку курсов
+  </a>
+</div>
+
+{% set empty_key = '' %}
+{% include "partials/flash_messages.html" %}
+
+{% set action_url = url_for('admin_courses.course_delete', course_id=course.id) %}
+{% set cancel_url = url_for('admin_courses.courses_list') %}
+{% set confirm_label = 'Удалить курс' %}
+{% set confirm_note = 'Название: ' ~ course.title %}
+{% set consequences = [
+  'заданий — ' ~ preview.assignments,
+  'групп — ' ~ preview.groups,
+  'участников — ' ~ preview.members,
+  'работ — ' ~ preview.submissions
+] %}
+{% set expected_title = course.title %}
+{% set consequence_intro = confirmation_text %}
+{% include "partials/confirm_dialog.html" with context %}
+
+<section class="card">
+  <h3>Что произойдёт</h3>
+  <p class="muted">
+    Курс и все связанные данные удаляются физически и безвозвратно.
+    Записи журнала действий сохраняются, но имя автора удалённых
+    действий обезличивается. Восстановить курс после удаления нельзя.
+  </p>
+</section>
+{% endblock %}

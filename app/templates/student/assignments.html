@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block page_title %}Задания{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Задания курса «{{ course.title }}»</h2>
+  <a class="button button-secondary" href="{{ url_for('index') }}">
+    В кабинет
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+{% if items %}
+  <ul class="plain-list card-list">
+    {% for item in items %}
+      <li class="card-row">
+        <div class="card-row-main">
+          <p class="card-row-title">
+            <a href="{{ url_for('student.assignment_card', course_id=course.id, assignment_id=item.id) }}">
+              {{ item.title }}
+            </a>
+            {% set status = item.status %}
+            {% include "partials/status_badge.html" with context %}
+          </p>
+          <p class="deadline">Дедлайн:
+            {% if item.due_label %}{{ item.due_label }}{% else %}<span class="muted">не задан</span>{% endif %}
+          </p>
+          {% if item.description %}
+            <p>{{ item.description[:200] }}{% if item.description | length > 200 %}…{% endif %}</p>
+          {% endif %}
+        </div>
+        <div class="card-row-actions">
+          <a class="button button-secondary"
+             href="{{ url_for('student.assignment_card', course_id=course.id, assignment_id=item.id) }}">
+            Открыть
+          </a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty-state">
+    <p class="empty-state-text">В курсе пока нет заданий.</p>
+  </div>
+{% endif %}
+{% endblock %}

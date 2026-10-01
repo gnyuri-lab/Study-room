@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block page_title %}Группы курса{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ course.title }}: группы</h2>
+  {% if is_admin %}
+    <a class="button button-secondary"
+       href="{{ url_for('admin_courses.course_edit', course_id=course.id) }}">
+      Изменить курс
+    </a>
+    <a class="button button-secondary button-danger"
+       href="{{ url_for('admin_courses.course_delete', course_id=course.id) }}">
+      Удалить курс
+    </a>
+  {% endif %}
+</div>
+
+{% set empty_key = 'course_groups' %}
+{% set action_url = is_admin and url_for('admin_import.import_upload', course_id=course.id) or '' %}
+{% set action_label = is_admin and 'Загрузить список из файла' or '' %}
+{% include "partials/flash_messages.html" %}
+
+{% if is_admin %}
+<section class="card">
+  <h3>Добавить группу</h3>
+  <form method="post" action="{{ url_for('admin_groups.group_create', course_id=course.id) }}"
+        novalidate>
+    <div class="form-field">
+      <label class="form-label" for="group-name">Название группы</label>
+      <input class="form-input" id="group-name" name="name" type="text"
+             value="{{ form.name }}" required maxlength="100">
+      <p class="form-hint">
+        Название уникально в пределах курса. Не длиннее 100 символов.
+      </p>
+    </div>
+    <div class="form-actions">
+      <button class="button" type="submit">Создать группу</button>
+      <a class="button button-secondary"
+         href="{{ url_for('admin_import.import_upload', course_id=course.id) }}">
+        Загрузить список из файла
+      </a>
+    </div>
+  </form>
+  <p class="form-hint">
+    Список из файла (.xlsx или .csv) создаёт группы и учётные записи
+    участников сразу — сначала показывается предпросмотр, и только после
+    подтверждения данные попадают в базу.
+  </p>
+</section>
+{% endif %}
+
+{% if groups %}
+  <ul class="plain-list card-list">
+    {% for group in groups %}
+      <li class="card-row {% if group.archived_at %}is-archived{% endif %}">
+        <div class="card-row-main">
+          <p class="card-row-title">
+            {{ group.name }}
+            {% if group.archived_at %}
+              <span class="status-badge status-revision">В архиве</span>
+            {% endif %}
+          </p>
+          <p class="muted">
+            студентов — {{ group.students_count }},
+            кураторов — {{ group.curators_count }}
+          </p>
+        </div>
+        <div class="card-row-actions">
+          <a class="button button-secondary"
+             href="{{ url_for('admin_groups.group_members', group_id=group.id) }}">
+            Участники
+          </a>
+          {% if not group.archived_at %}
+            <a class="button button-secondary"
+               href="{{ url_for('admin_groups.group_edit', group_id=group.id) }}">
+              Изменить группу
+            </a>
+            <form class="inline-form" method="post"
+                  action="{{ url_for('admin_groups.group_delete', group_id=group.id) }}"
+                  data-confirm="Удалить группу «{{ group.name }}»? Если по группе есть работы, она будет переведена в архив.">
+              <button class="button button-secondary button-danger" type="submit">
+                Удалить группу
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "partials/empty_state.html" with context %}
+{% endif %}
+{% endblock %}

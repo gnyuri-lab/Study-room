@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block page_title %}Журнал действий{% endblock %}
+{% block content %}
+{# Экран журнала (FR-61…FR-64, этап Э-8). Четыре фильтра в одной
+   форме: выбор в любом поле сохраняет остальные, потому что браузер
+   отправляет все поля разом. Кнопка «Сбросить» стоит у каждого
+   применённого поля и передаёт имя только своего ключа — сервер
+   очистит ровно его (независимость сбросов, как на дашборде).
+   Скрипт filters.js отправляет форму при смене списка; поле даты
+   применяется по Enter или кнопкой «Применить». #}
+<div class="page-head">
+  <h2>Журнал действий</h2>
+  <a class="button" href="{{ export_url }}">Выгрузить CSV</a>
+</div>
+
+<form class="filters card" method="get" action="{{ url_for('admin_audit.index') }}" data-filters>
+  <h3>Фильтры</h3>
+  <div class="filters-grid">
+    <div class="filters-field">
+      <label class="form-label" for="filter-date">Дата</label>
+      <input class="form-input" type="date" id="filter-date" name="date"
+             value="{{ applied.date or '' }}">
+      {% if applied.date %}
+        <button class="button button-secondary filters-reset" type="submit"
+                name="reset" value="date">Сбросить</button>
+      {% endif %}
+    </div>
+    <div class="filters-field">
+      <label class="form-label" for="filter-role">Роль</label>
+      <select class="form-input" id="filter-role" name="role">
+        <option value="">Все роли</option>
+        {% for option in role_options %}
+          <option value="{{ option.value }}"{% if applied.role == option.value %} selected{% endif %}>
+            {{ option.label }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if applied.role %}
+        <button class="button button-secondary filters-reset" type="submit"
+                name="reset" value="role">Сбросить</button>
+      {% endif %}
+    </div>
+    <div class="filters-field">
+      <label class="form-label" for="filter-course">Курс</label>
+      <select class="form-input" id="filter-course" name="course">
+        <option value="">Все курсы</option>
+        {% for course in course_options %}
+          <option value="{{ course.id }}"{% if applied.course == course.id %} selected{% endif %}>
+            {{ course.title }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if applied.course %}
+        <button class="button button-secondary filters-reset" type="submit"
+                name="reset" value="course">Сбросить</button>
+      {% endif %}
+    </div>
+    <div class="filters-field">
+      <label class="form-label" for="filter-entity">Тип объекта</label>
+      <select class="form-input" id="filter-entity" name="entity">
+        <option value="">Все типы объектов</option>
+        {% for option in entity_options %}
+          <option value="{{ option.value }}"{% if applied.entity == option.value %} selected{% endif %}>
+            {{ option.label }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if applied.entity %}
+        <button class="button button-secondary filters-reset" type="submit"
+                name="reset" value="entity">Сбросить</button>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="button" type="submit">Применить</button>
+    {% if filters_active %}
+      <button class="button button-secondary" type="submit" name="reset" value="all">
+        Сбросить все
+      </button>
+    {% endif %}
+  </div>
+</form>
+
+{% if filter_error %}
+  <p class="alert alert-error" role="alert">{{ MESSAGES['audit_filter_invalid'] }}</p>
+{% endif %}
+
+{% if rows %}
+  <section class="card">
+    <h3>Записи</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Дата и время</th>
+          <th scope="col">Автор</th>
+          <th scope="col">Действие</th>
+          <th scope="col">Объект</th>
+          <th scope="col">Контекст</th>
+          <th scope="col">Статус</th>
+          <th scope="col">Детали</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td data-label="Дата и время">{{ row.time_label }}</td>
+            {# Обезличенный автор (Д-11): e-mail и ФИО удалены вместе
+               с курсом, роль на момент действия в записи осталась. #}
+            <td data-label="Автор">
+              {% if row.anonymized %}
+                <span class="muted">Автор обезличен</span>
+              {% else %}
+                {{ row.actor_name }}<br>
+                <span class="muted">{{ row.actor_email }}</span>
+              {% endif %}
+              <br><span class="muted">{{ row.role_label }}</span>
+            </td>
+            <td data-label="Действие">
+              {{ row.action_label }}
+              <br><span class="muted">{{ row.action }}</span>
+            </td>
+            <td data-label="Объект">
+              {{ row.entity_type_label }}{% if row.entity_id %} №{{ row.entity_id }}{% endif %}
+            </td>
+            <td data-label="Контекст">
+              {% if row.course_label or row.group_label or row.assignment_label %}
+                {% if row.course_label %}<div>Курс: {{ row.course_label }}</div>{% endif %}
+                {% if row.group_label %}<div>Группа: {{ row.group_label }}</div>{% endif %}
+                {% if row.assignment_label %}<div>Задание: {{ row.assignment_label }}</div>{% endif %}
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+            <td data-label="Статус">
+              {% if row.status_label %}{{ row.status_label }}{% else %}<span class="muted">—</span>{% endif %}
+            </td>
+            <td data-label="Детали">
+              {% if row.details_label %}{{ row.details_label }}{% else %}<span class="muted">—</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% else %}
+  {# Пустая выборка — при действующих фильтрах кнопка сбрасывает их
+     (§9.2: «Записей, удовлетворяющих фильтру, нет.»). #}
+  {% set empty_key = 'audit_log' %}
+  {% set action_url = url_for('admin_audit.index') if filters_active else '' %}
+  {% set action_label = 'Сбросить фильтры' if filters_active else '' %}
+  {% include "partials/empty_state.html" %}
+{% endif %}
+{% endblock %}

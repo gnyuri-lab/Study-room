@@ -1,0 +1,848 @@
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-border: #d3d8de;
+  --color-text: #1b1f24;
+  --color-text-muted: #55606b;
+  --color-accent: #1b5e93;
+  --color-accent-dark: #12466e;
+  --color-accent-soft: #e8f1f9;
+  --color-focus: #b35c00;
+  --color-grey-bg: #eceff2;
+  --color-grey-text: #3f4a55;
+  --color-blue-bg: #e3edf9;
+  --color-blue-text: #14487f;
+  --color-yellow-bg: #fdf3d8;
+  --color-yellow-text: #7a5a05;
+  --color-green-bg: #e2f3e6;
+  --color-green-text: #1c6234;
+  --color-orange-bg: #fdeada;
+  --color-orange-text: #8a4a08;
+  --color-danger-bg: #fbe4e4;
+  --color-danger-text: #8c1d1d;
+  --radius: 6px;
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --font-base: "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: "Consolas", "SFMono-Regular", "Courier New", monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-base);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 var(--space-m);
+}
+
+h1 {
+  font-size: 1.6rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+p {
+  margin: 0 0 var(--space-m);
+}
+
+a {
+  color: var(--color-accent-dark);
+}
+
+a:hover {
+  color: var(--color-accent);
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: var(--space-m);
+}
+
+img,
+svg,
+video,
+table {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  background-color: var(--color-bg);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius);
+  left: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  position: absolute;
+  top: -100px;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: var(--space-s);
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 960px;
+  padding-left: var(--space-m);
+  padding-right: var(--space-m);
+  width: 100%;
+}
+
+.app-header {
+  background-color: var(--color-accent-soft);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-inner {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-m);
+  justify-content: space-between;
+  padding-bottom: var(--space-m);
+  padding-top: var(--space-m);
+}
+
+.brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.brand-sep {
+  color: var(--color-text-muted);
+}
+
+.stage-badge {
+  color: var(--color-accent-dark);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+main {
+  padding-bottom: var(--space-xl);
+  padding-top: var(--space-l);
+}
+
+main:focus {
+  outline: none;
+}
+
+.card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-l);
+  padding: var(--space-l) var(--space-m);
+}
+
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plain-list li {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-s) 0;
+}
+
+.plain-list li:last-child {
+  border-bottom: 0;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.button {
+  background-color: var(--color-accent);
+  border: 1px solid var(--color-accent-dark);
+  border-radius: var(--radius);
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-block;
+  font: inherit;
+  padding: var(--space-s) var(--space-m);
+  text-decoration: none;
+}
+
+.button:hover {
+  background-color: var(--color-accent-dark);
+  color: #ffffff;
+}
+
+.button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.status-badge {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.85rem;
+  padding: 2px var(--space-s);
+  white-space: nowrap;
+}
+
+.status-not_submitted {
+  background-color: var(--color-grey-bg);
+  border-color: #c3cbd3;
+  color: var(--color-grey-text);
+}
+
+.status-submitted {
+  background-color: var(--color-blue-bg);
+  border-color: #b9d2ec;
+  color: var(--color-blue-text);
+}
+
+.status-revision {
+  background-color: var(--color-yellow-bg);
+  border-color: #ecd79a;
+  color: var(--color-yellow-text);
+}
+
+.status-accepted {
+  background-color: var(--color-green-bg);
+  border-color: #b6dcc1;
+  color: var(--color-green-text);
+}
+
+.status-accepted_late {
+  background-color: var(--color-orange-bg);
+  border-color: #f3c99a;
+  color: var(--color-orange-text);
+}
+
+/* Вердикт строки импорта, а не статус сдачи: пять классов выше
+   соответствуют пяти статусам §7.9, и «Отклонена» среди них означала бы
+   статус работы. Отдельный класс — с той же красной гаммой, что
+   .alert-error. */
+.status-rejected {
+  background-color: var(--color-danger-bg);
+  border-color: #eab6b6;
+  color: var(--color-danger-text);
+}
+
+.app-footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-m) 0;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.is-loading {
+  cursor: progress;
+}
+
+/* Формы и сообщения. Добавлены на этапе Э-2 под формы входа и смены
+   учётных данных; существующие правила выше не тронуты. */
+.auth-shell {
+  margin: 0 auto;
+  max-width: 480px;
+}
+
+.form-field {
+  margin-bottom: var(--space-m);
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.form-input {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  padding: var(--space-s);
+  width: 100%;
+}
+
+.form-hint {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin: var(--space-xs) 0 0;
+}
+
+.checkbox-row {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-s);
+  margin-bottom: var(--space-m);
+}
+
+.checkbox-row input {
+  height: 20px;
+  margin-top: 3px;
+  width: 20px;
+}
+
+.checkbox-row label {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  margin-top: var(--space-l);
+}
+
+.alert {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  margin-bottom: var(--space-m);
+  padding: var(--space-s) var(--space-m);
+}
+
+.alert-error {
+  background-color: var(--color-danger-bg);
+  border-color: #eab6b6;
+  color: var(--color-danger-text);
+}
+
+.alert-info {
+  background-color: var(--color-blue-bg);
+  border-color: #b9d2ec;
+  color: var(--color-blue-text);
+}
+
+.logout-form {
+  display: inline;
+  margin: 0;
+}
+
+.button-secondary {
+  background-color: var(--color-bg);
+  color: var(--color-accent-dark);
+}
+
+.button-secondary:hover {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-dark);
+}
+
+.user-badge {
+  color: var(--color-accent-dark);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Экранные состояния и списки. Добавлены на этапе Э-3 под курсы, группы
+   и участников; правила выше не тронуты. */
+.flash-stack {
+  margin-bottom: var(--space-m);
+}
+
+.page-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-m);
+  justify-content: space-between;
+  margin-bottom: var(--space-m);
+}
+
+.page-head h2 {
+  margin: 0;
+}
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card-row {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-m);
+  padding: var(--space-m);
+}
+
+.card-row.is-archived {
+  background-color: var(--color-surface);
+}
+
+.card-row-title {
+  font-weight: 600;
+  margin: 0 0 var(--space-xs);
+}
+
+.card-row-main p {
+  margin: 0 0 var(--space-xs);
+}
+
+.card-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  margin-top: var(--space-m);
+}
+
+.inline-form {
+  display: inline;
+  margin: 0;
+}
+
+.card-row-actions .button {
+  font-size: 0.9rem;
+  padding: 6px var(--space-s);
+}
+
+.role-badge {
+  background-color: var(--color-accent-soft);
+  border-radius: 999px;
+  color: var(--color-accent-dark);
+  font-size: 0.8rem;
+  font-weight: 400;
+  padding: 2px var(--space-s);
+  white-space: nowrap;
+}
+
+.member-row .card-row-actions {
+  margin-top: var(--space-s);
+}
+
+.member-details {
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-m);
+  padding-top: var(--space-s);
+}
+
+.member-details summary {
+  color: var(--color-accent-dark);
+  cursor: pointer;
+}
+
+.member-details form {
+  margin-top: var(--space-m);
+}
+
+.password-line {
+  margin: var(--space-xs) 0 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.empty-state {
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-l);
+  padding: var(--space-l) var(--space-m);
+  text-align: center;
+}
+
+.empty-state-text {
+  margin-bottom: var(--space-m);
+}
+
+.consequence-list {
+  margin: 0 0 var(--space-m);
+  padding-left: var(--space-l);
+}
+
+.button-danger {
+  background-color: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+}
+
+.button-danger:hover {
+  background-color: #6f1616;
+  color: #ffffff;
+}
+
+.button-danger.button-secondary {
+  background-color: var(--color-bg);
+  color: var(--color-danger-text);
+}
+
+.button-danger.button-secondary:hover {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .card {
+    padding: var(--space-m) var(--space-s);
+  }
+
+  .header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-row {
+    padding: var(--space-m) var(--space-s);
+  }
+
+  .card-row-actions .button,
+  .page-head .button {
+    width: 100%;
+  }
+
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Возврат на главную из шапки: ссылка не должна переноситься по словам. */
+.header-home {
+  white-space: nowrap;
+}
+
+/* Показ пароля: кнопка лежит поверх поля, поэтому поле шире на её ширину.
+   Кнопку дорисовывает password-toggle.js — без неё поле выглядит как
+   обычное. */
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap .form-input {
+  padding-right: 42px;
+}
+
+.password-toggle {
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  line-height: 0;
+  padding: 4px;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--color-accent-dark);
+}
+
+/* Дашборд (Э-7): фильтры, сводные показатели, диаграмма и таблицы.
+   Правила выше не тронуты. */
+.filters {
+  padding-bottom: var(--space-m);
+  padding-top: var(--space-m);
+}
+
+.filters h3 {
+  margin-bottom: var(--space-s);
+}
+
+.filters-grid {
+  display: grid;
+  gap: var(--space-m);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.filters-field {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Список подсказок под полем поиска студента (FR-58): полное ФИО
+   показывается при вводе букв, выбор кликом применяет фильтр
+   (замечание заказчика 01.10.2026). Список лежит над соседними
+   полями формы, поэтому ему нужен свой слой. */
+.filters-suggest {
+  position: relative;
+}
+
+.filters-suggest-list {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow, 0 4px 12px rgba(0, 0, 0, 0.12));
+  left: 0;
+  list-style: none;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+}
+
+.filters-suggest-list[hidden] {
+  display: none;
+}
+
+.filters-suggest-option {
+  cursor: pointer;
+  padding: 6px var(--space-s);
+}
+
+.filters-suggest-option[hidden] {
+  display: none;
+}
+
+.filters-suggest-option.is-active,
+.filters-suggest-option:hover {
+  background-color: var(--color-accent-soft);
+}
+
+.filters-reset {
+  font-size: 0.85rem;
+  margin-top: var(--space-xs);
+  padding: 4px var(--space-s);
+  width: 100%;
+}
+
+.filters .form-actions {
+  margin-top: var(--space-m);
+}
+
+.summary-grid {
+  display: grid;
+  gap: var(--space-s);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 0;
+}
+
+.summary-item {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-s) var(--space-m);
+}
+
+.summary-value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.summary-label {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Диаграмма: картинка растягивается по ширине карточки, но не шире
+   заданной в charts.py — иначе полосы потеряют смысл масштаба. */
+.chart {
+  display: block;
+  height: auto;
+  margin: 0 0 var(--space-m);
+  max-width: 680px;
+  width: 100%;
+}
+
+.chart text {
+  font-family: var(--font-base);
+}
+
+.chart-label {
+  fill: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chart-value {
+  fill: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* Цвета полос — тот же оттеночный строй, что у бейджей status-<код>
+   (§9.4), но насыщеннее: бейдж держит текст и потому светлее, а полоса
+   на белом фоне карточки должна читаться с одного взгляда (замечание
+   приёмки 01.10.2026 — «сделать контрастнее»). Класс называется кодом
+   статуса, а не цветом, потому что цвет — деталь оформления и может
+   измениться, а код остаётся тем же. */
+.chart-bar {
+  stroke-width: 1;
+}
+
+.chart-bar--not_submitted {
+  fill: #c9d1d9;
+  stroke: #a3aeba;
+}
+
+.chart-bar--submitted {
+  fill: #a5c6ee;
+  stroke: #77a6dc;
+}
+
+.chart-bar--revision {
+  fill: #f5db93;
+  stroke: #e1bb54;
+}
+
+.chart-bar--accepted {
+  fill: #a1d6b1;
+  stroke: #6cba85;
+}
+
+.chart-bar--accepted_late {
+  fill: #f8c48f;
+  stroke: #e99a4e;
+}
+
+/* Нулевая полоса не должна оставлять след от обводки. */
+.chart-bar[width="0"] {
+  stroke: none;
+}
+
+/* Таблицы дашборда: рамки и заголовки без встроенных стилей браузера. */
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-s);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  background-color: var(--color-surface);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.data-table tr.is-highlighted td {
+  background-color: var(--color-accent-soft);
+}
+
+.data-table td .button {
+  font-size: 0.85rem;
+  margin-left: var(--space-s);
+  padding: 4px var(--space-s);
+}
+
+/* Дедлайн — надпись и дата красным: срок должен читаться с одного
+   взгляда и на таблице успеваемости, и в списках заданий (замечание
+   приёмки 01.10.2026). «Не задан» — не дата: оно завёрнуто в
+   span.muted, и прямое правило .muted для этого элемента сильнее
+   наследуемого красного цвета родителя. */
+.deadline {
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 600px) {
+  /* Кегль подписи внутри SVG задан в единицах viewBox, а картина
+     шириной 680 на экране 360 px сжимается примерно в 2,3 раза:
+     без этой подмены 13 px превратились бы в 6 px. 26 единиц дают
+     после масштабирования около 11 px — текст остаётся читаемым,
+     а горизонтальная прокрутка не появляется (NFR-01). */
+  .chart-label,
+  .chart-value {
+    font-size: 26px;
+  }
+
+  /* Каждая строка становится карточкой с подписями полей: так таблица
+     из шести колонок помещается в 360 px без горизонтальной
+     прокрутки (NFR-01). Подпись берётся из data-label ячейки. */
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: var(--space-s);
+  }
+
+  .data-table td {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-m);
+    justify-content: space-between;
+    text-align: right;
+  }
+
+  .data-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .data-table td .button {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block page_title %}{{ assignment.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ assignment.title }}</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('student.assignments_list', course_id=course.id) }}">
+    К списку заданий
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+<section class="card">
+  <p>
+    <span class="muted">Статус работы:</span>
+    {% include "partials/status_badge.html" with context %}
+  </p>
+  <p>
+    <span class="deadline">Дедлайн сдачи:
+      {% if due_label %}{{ due_label }}{% else %}<span class="muted">не задан</span>{% endif %}
+    </span>
+  </p>
+  {% if assignment.description %}
+    <pre class="mono" style="white-space: pre-wrap;">{{ assignment.description }}</pre>
+  {% endif %}
+</section>
+
+{# AC-06: ниже дедлайна перечислены материалы задания. #}
+<section class="card">
+  <h3>Материалы задания</h3>
+  {% if files %}
+    <ul class="plain-list">
+      {% for file in files %}
+        <li>
+          <a href="{{ url_for('files.download', kind='assignment', file_id=file.id) }}">
+            {{ file.original_name }}
+          </a>
+          <span class="muted">— {{ file.size_label }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">К заданию не приложено файлов.</p>
+  {% endif %}
+</section>
+
+{# История попыток (FR-44): каждая строка — отдельная сдача со своим
+   статусом, комментарием студента и файлами. #}
+<section class="card">
+  <h3>Работа</h3>
+  {% if attempts %}
+    <ul class="plain-list">
+      {% for attempt in attempts %}
+        <li>
+          <p class="card-row-title">
+            Попытка {{ attempt.attempt_no }}
+            {% set status = attempt.status %}
+            {% include "partials/status_badge.html" with context %}
+          </p>
+          <p class="muted">
+            Отправлено: {{ attempt.submitted_label or '—' }}
+          </p>
+          {% if attempt.comment %}
+            <pre class="mono" style="white-space: pre-wrap;">{{ attempt.comment }}</pre>
+          {% endif %}
+          {% if attempt.files %}
+            <ul class="plain-list">
+              {% for file in attempt.files %}
+                <li>
+                  <a href="{{ file.download_url }}">{{ file.original_name }}</a>
+                  <span class="muted">— {{ file.size_label }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ EMPTY_STATES['student_assignment'] }}</p>
+  {% endif %}
+</section>
+
+{# FR-50: переписка по всей работе — комментарии всех попыток в
+   порядке добавления, с автором и его ролью. Форма пишет в последнюю
+   попытку: комментарий к закрытой сдаче создать нельзя. #}
+{% if attempts %}
+<section class="card">
+  <h3>Переписка по работе</h3>
+  {% if thread %}
+    <ul class="plain-list">
+      {% for message in thread %}
+        <li>
+          <p class="card-row-title">
+            {{ message.author_name }}
+            <span class="role-badge">{{ message.author_role_label }}</span>
+          </p>
+          <p class="muted">{{ message.created_label }}</p>
+          <pre class="mono" style="white-space: pre-wrap;">{{ message.body }}</pre>
+          {% for file in message.files %}
+            <p>
+              <a href="{{ file.file_url }}">{{ file.file_name }}</a>
+              <span class="muted">— {{ file.size_label }}</span>
+            </p>
+          {% endfor %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Комментариев пока нет.</p>
+  {% endif %}
+
+  <h4>Добавить комментарий</h4>
+  <form method="post" enctype="multipart/form-data" novalidate
+        action="{{ url_for('student.submission_comment',
+                          submission_id=latest_submission_id) }}">
+    <div class="form-field">
+      <label class="form-label" for="body">Текст комментария</label>
+      <textarea class="form-input" id="body" name="body" rows="3"
+                required maxlength="{{ max_comment }}"></textarea>
+      <p class="form-hint">
+        Не длиннее {{ max_comment }} символов. Обязателен, если прикладываете файл.
+      </p>
+    </div>
+    {% with field_id = 'comment-file',
+            label = 'Файлы к комментарию',
+            max_files = max_comment_files,
+            hint = 'Не больше ' ~ max_comment_files ~ ' файлов по 10 МБ.' %}
+      {% include "partials/file_input.html" %}
+    {% endwith %}
+    <div class="form-actions">
+      <button class="button" type="submit">Добавить комментарий</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="card">
+  <h3>{% if block_reason %}Сдача закрыта{% else %}Отправить работу{% endif %}</h3>
+  <p class="muted">
+    Попыток использовано: {{ attempts|length }} из {{ attempt_limit }}.
+  </p>
+
+  {% if block_reason %}
+    {# Причина приходит текстом из сервиса (§9.3): студент не гадает,
+       почему кнопки нет, а читает лимит, статус или отказ принятия. #}
+    <p class="alert alert-info" role="status">{{ block_reason }}</p>
+  {% else %}
+    <form method="post" enctype="multipart/form-data" novalidate
+          action="{{ url_for('student.assignment_submit',
+                            course_id=course.id, assignment_id=assignment.id) }}">
+      <div class="form-field">
+        <label class="form-label" for="comment">Комментарий к работе</label>
+        <textarea class="form-input" id="comment" name="comment" rows="4"
+                  required maxlength="{{ max_comment }}"></textarea>
+        <p class="form-hint">
+          Обязателен: куратор читает его первым. Не длиннее
+          {{ max_comment }} символов.
+        </p>
+      </div>
+
+      {% set field_id = 'files' %}
+      {% set label = 'Файлы работы' %}
+      {% set hint = 'Не больше ' ~ max_files ~ ' файлов по 10 МБ. Разрешены: xlsx, xls, docx, pdf, csv, txt, md, png, jpg, zip.' %}
+      {% include "partials/file_input.html" %}
+
+      <div class="form-actions">
+        <button class="button" type="submit">Отправить работу</button>
+      </div>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

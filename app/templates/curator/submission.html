@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block page_title %}{{ context.assignment_title }} — {{ context.student_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ context.assignment_title }}: {{ context.student_name }}</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_assignments.assignments_list', course_id=context.course_id) }}">
+    К заданиям курса
+  </a>
+</div>
+
+<p class="muted">
+  Курс: {{ context.course_title }} · попытка {{ context.attempt_no }}
+  из {{ attempt_limit }}
+</p>
+
+{% include "partials/flash_messages.html" %}
+
+<section class="card">
+  <p>
+    <span class="muted">Статус:</span>
+    {% set status = context.status %}
+    {% include "partials/status_badge.html" with context %}
+  </p>
+  <p><span class="muted">Отправлено:</span> {{ context.submitted_label or '—' }}</p>
+  <p>
+    <span class="deadline">Дедлайн:
+      {% if context.due_label %}{{ context.due_label }}{% else %}<span class="muted">не задан</span>{% endif %}
+    </span>
+  </p>
+  {% if context.comment %}
+    <p class="muted">Комментарий студента:</p>
+    <pre class="mono" style="white-space: pre-wrap;">{{ context.comment }}</pre>
+  {% endif %}
+  {% if files %}
+    <h4>Файлы работы</h4>
+    <ul class="plain-list">
+      {% for file in files %}
+        <li>
+          <a href="{{ file.download_url }}">{{ file.original_name }}</a>
+          <span class="muted">— {{ file.size_label }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Файлы к работе не приложены.</p>
+  {% endif %}
+</section>
+
+{# FR-44: история попыток одной работы — все сдачки студента по этому
+   заданию, каждая открывается отдельной карточкой. #}
+<section class="card">
+  <h3>История попыток</h3>
+  <ul class="plain-list">
+    {% for attempt in attempts %}
+      <li>
+        <p class="card-row-title">
+          Попытка {{ attempt.attempt_no }}
+          {% set status = attempt.status %}
+          {% include "partials/status_badge.html" with context %}
+          <span class="muted">{{ attempt.submitted_label or '—' }}</span>
+        </p>
+        {% if attempt.id != context.id %}
+          <a class="button button-secondary"
+             href="{{ url_for('curator.submission_card', submission_id=attempt.id) }}">
+            Открыть эту попытку
+          </a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h3>Переписка по работе</h3>
+  {% if thread %}
+    <ul class="plain-list">
+      {% for message in thread %}
+        <li>
+          <p class="card-row-title">
+            {{ message.author_name }}
+            <span class="role-badge">{{ message.author_role_label }}</span>
+          </p>
+          <p class="muted">{{ message.created_label }}</p>
+          <pre class="mono" style="white-space: pre-wrap;">{{ message.body }}</pre>
+          {% for file in message.files %}
+            <p>
+              <a href="{{ file.file_url }}">{{ file.file_name }}</a>
+              <span class="muted">— {{ file.size_label }}</span>
+            </p>
+          {% endfor %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Комментариев пока нет.</p>
+  {% endif %}
+
+  <h4>Добавить комментарий</h4>
+  <form method="post" enctype="multipart/form-data" novalidate
+        action="{{ url_for('curator.submission_comment',
+                          submission_id=context.id) }}">
+    <div class="form-field">
+      <label class="form-label" for="body">Текст комментария</label>
+      <textarea class="form-input" id="body" name="body" rows="3"
+                required maxlength="{{ max_comment }}"></textarea>
+      <p class="form-hint">
+        Не длиннее {{ max_comment }} символов. Обязателен, если прикладываете файл.
+      </p>
+    </div>
+    {% with field_id = 'comment-file',
+            label = 'Файлы к комментарию',
+            max_files = max_comment_files,
+            hint = 'Не больше ' ~ max_comment_files ~ ' файлов по 10 МБ.' %}
+      {% include "partials/file_input.html" %}
+    {% endwith %}
+    <div class="form-actions">
+      <button class="button" type="submit">Добавить комментарий</button>
+    </div>
+  </form>
+</section>
+
+{# Проверка: три mutually exclusive положения — терминальный статус,
+   работа «на проверке» и всё остальное. Сообщения §9.3 показываются
+   там, где действия нет, а не прячутся: куратор должен прочитать,
+   почему кнопки нет (AC-14). #}
+<section class="card">
+  <h3>Проверка</h3>
+
+  {% if terminal %}
+    {% if is_admin %}
+      <p class="muted">
+        Статус меняет только администратор. Возврат в доработку записывается
+        в журнал отдельным действием.
+      </p>
+      <form method="post" enctype="multipart/form-data" novalidate
+            data-confirm="Вернуть работу в доработку? Статус изменится на «на доработку»."
+            action="{{ url_for('curator.submission_revert', submission_id=context.id) }}">
+        <div class="form-field">
+          <label class="form-label" for="revert-comment">Комментарий</label>
+          <textarea class="form-input" id="revert-comment" name="comment" rows="3"
+                    maxlength="{{ max_comment }}"></textarea>
+          <p class="form-hint">Необязателен, но объясняет студенту, что вернуть.</p>
+        </div>
+        {% with field_id = 'revert-file',
+                label = 'Файлы к комментарию',
+                max_files = max_comment_files,
+                hint = 'Не больше ' ~ max_comment_files ~ ' файлов по 10 МБ.' %}
+          {% include "partials/file_input.html" %}
+        {% endwith %}
+        <div class="form-actions">
+          <button class="button button-danger" type="submit">
+            Вернуть на доработку
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <p class="alert alert-info" role="status">{{ MESSAGES.status_terminal }}</p>
+    {% endif %}
+
+  {% elif status == 'submitted' and can_review %}
+    <form method="post" enctype="multipart/form-data" novalidate
+          action="{{ url_for('curator.submission_status', submission_id=context.id) }}">
+      <div class="checkbox-row">
+        <input id="status-accepted" type="radio" name="requested"
+               value="accepted" checked>
+        <label for="status-accepted">Сдано</label>
+      </div>
+      <div class="checkbox-row">
+        <input id="status-revision" type="radio" name="requested" value="revision">
+        <label for="status-revision">На доработку</label>
+      </div>
+      <p class="form-hint">
+        «Сдано» после дедлайна сохраняется как «сдано после дедлайна» —
+        это считает система (FR-47).
+      </p>
+
+      <div class="form-field">
+        <label class="form-label" for="review-comment">Комментарий</label>
+        <textarea class="form-input" id="review-comment" name="comment" rows="3"
+                  maxlength="{{ max_comment }}"></textarea>
+        <p class="form-hint">
+          Обязателен при статусе «на доработку». Не длиннее
+          {{ max_comment }} символов.
+        </p>
+      </div>
+      {% with field_id = 'review-file',
+              label = 'Файлы к комментарию',
+              max_files = max_comment_files,
+              hint = 'Не больше ' ~ max_comment_files ~ ' файлов по 10 МБ.' %}
+        {% include "partials/file_input.html" %}
+      {% endwith %}
+      <div class="form-actions">
+        <button class="button" type="submit">Сохранить статус</button>
+      </div>
+    </form>
+
+  {% else %}
+    <p class="alert alert-info" role="status">
+      {{ MESSAGES.status_not_on_review.format(status=STATUSES[status].label) }}
+    </p>
+  {% endif %}
+</section>
+{% endblock %}

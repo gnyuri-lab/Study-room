@@ -1,0 +1,26 @@
+# Виртуальное окружение
+.venv/
+venv/
+
+# Ключ шифрования паролей и база с данными (NFR-08, О-11)
+var/
+data/
+
+# Служебные файлы Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Инструменты и редакторы
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini
+.playwright-mcp/
+.opencode/
+
+# Служебные файлы Word в Inputs/
+Inputs/~$*
+Inputs/~WRL*

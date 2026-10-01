@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block page_title %}Задания курса{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Задания курса «{{ course.title }}»</h2>
+  {% if is_admin %}
+    <a class="button" href="{{ url_for('admin_assignments.assignment_create', course_id=course.id) }}">
+      Добавить задание
+    </a>
+  {% endif %}
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+{% if error %}
+  <p class="alert alert-error" role="alert">{{ error }}</p>
+{% endif %}
+
+{% if active %}
+  <ul class="plain-list card-list">
+    {% for item in active %}
+      <li class="card-row">
+        <div class="card-row-main">
+          <p class="card-row-title">
+            {% if is_admin %}
+              <a href="{{ url_for('admin_assignments.assignment_edit', course_id=course.id, assignment_id=item.id) }}">
+                {{ item.title }}
+              </a>
+            {% else %}
+              {{ item.title }}
+            {% endif %}
+          </p>
+          <p class="muted">
+            <span class="deadline">Дедлайн:
+              {% if item.due_label %}{{ item.due_label }}{% else %}<span class="muted">не задан</span>{% endif %}
+            </span>
+            · файлов: {{ item.files_count }} из 5
+            · сдач: {{ item.submissions_count }}
+            {% if item.description %}
+              <br>{{ item.description[:200] }}{% if item.description | length > 200 %}…{% endif %}
+            {% endif %}
+          </p>
+        </div>
+        {% if is_admin %}
+        <div class="card-row-actions">
+          <a class="button button-secondary"
+             href="{{ url_for('admin_assignments.assignment_edit', course_id=course.id, assignment_id=item.id) }}">
+            Изменить
+          </a>
+          <a class="button button-secondary button-danger"
+             href="{{ url_for('admin_assignments.assignment_delete', course_id=course.id, assignment_id=item.id) }}">
+            Удалить
+          </a>
+        </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% set empty_key = 'assignments' %}
+  {% set action_url = is_admin and url_for('admin_assignments.assignment_create', course_id=course.id) or '' %}
+  {% set action_label = is_admin and 'Добавить первое задание' or '' %}
+  {% include "partials/empty_state.html" %}
+{% endif %}
+
+{# Архив показывается отдельно и только сотрудникам курса (админу и
+   куратору), не студенту: работы в нём сохранены, но задания для
+   студента больше нет (BR-23, чек-лист §12). #}
+{% if archived %}
+  <section class="card">
+    <h3>Архив</h3>
+    <p class="muted">
+      Задания со сдачами не удаляются, а переносятся сюда: работы,
+      комментарии и файлы сохраняются.
+    </p>
+    <ul class="plain-list">
+      {% for item in archived %}
+        <li class="is-archived">
+          {{ item.title }}
+          <span class="muted">
+            — сдач: {{ item.submissions_count }}, файлов: {{ item.files_count }},
+            в архиве с
+            <time datetime="{{ item.archived_at }}">{{ item.archived_at[:10] }}</time>
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+<section class="card">
+  <div class="form-actions">
+    <a class="button button-secondary"
+       href="{{ url_for('admin_groups.groups_list', course_id=course.id) }}">
+      Группы и участники
+    </a>
+    {% if is_admin %}
+      <a class="button button-secondary"
+         href="{{ url_for('admin_courses.course_edit', course_id=course.id) }}">
+        О курсе
+      </a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

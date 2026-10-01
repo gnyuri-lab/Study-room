@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block page_title %}Вход{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <section class="card">
+    <h2>Вход в кабинет</h2>
+
+    {% if error %}
+      <p class="alert alert-error" role="alert">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+      <input type="hidden" name="next" value="{{ next_url }}">
+
+      <div class="form-field">
+        <label class="form-label" for="email">Логин (e-mail)</label>
+        <input class="form-input" id="email" name="email" type="email"
+               value="{{ email }}" autocomplete="username"
+               required maxlength="254" autofocus>
+        <p class="form-hint">Логин и пароль выдаёт администратор курса.</p>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="password">Пароль</label>
+        <input class="form-input" id="password" name="password" type="password"
+               autocomplete="current-password" required>
+      </div>
+
+      <div class="form-actions">
+        <button class="button" type="submit">Войти</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h3>Первый вход</h3>
+    <p class="muted">
+      Если пароль выдал администратор, после входа система попросит сменить
+      логин и пароль. Продолжить работу можно будет только после этого.
+    </p>
+  </section>
+</div>
+{% endblock %}

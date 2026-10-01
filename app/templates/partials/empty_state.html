@@ -1,0 +1,11 @@
+{# Пустое состояние по §9.2: текст из EMPTY_STATES и одна основная
+   кнопка действия. Обязательна именно одна кнопка — иначе экран
+   превращается в список вариантов, а не в приглашение к действию. #}
+{% if empty_key in EMPTY_STATES %}
+  <div class="empty-state">
+    <p class="empty-state-text">{{ EMPTY_STATES[empty_key] }}</p>
+    {% if action_url and action_label %}
+      <a class="button" href="{{ action_url }}">{{ action_label }}</a>
+    {% endif %}
+  </div>
+{% endif %}

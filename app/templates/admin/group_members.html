@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block page_title %}Участники группы{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ group.name }}: участники</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_groups.groups_list', course_id=group.course_id) }}">
+    К группам курса
+  </a>
+  {% if is_admin %}
+    <a class="button button-secondary"
+       href="{{ url_for('admin_groups.group_edit', group_id=group.id) }}">
+      Изменить группу
+    </a>
+  {% endif %}
+</div>
+
+{% set empty_key = 'group_members' %}
+{% set action_url = is_admin and url_for('admin_import.import_upload', course_id=group.course_id) or '' %}
+{% set action_label = is_admin and 'Загрузить список из файла' or '' %}
+{% include "partials/flash_messages.html" %}
+
+{% if new_password %}
+  <p class="alert alert-info" role="status">
+    Новый пароль участника: <span class="mono">{{ new_password[1] }}</span>.
+    Передайте его участнику и сохраните в надёжном месте — второй раз
+    его можно увидеть только через «Показать пароль».
+  </p>
+{% endif %}
+
+{% if is_admin %}
+<section class="card">
+  <h3>Добавить участника вручную</h3>
+  <form method="post"
+        action="{{ url_for('admin_groups.member_create', group_id=group.id) }}"
+        novalidate>
+    <div class="form-field">
+      <label class="form-label" for="full_name">ФИО</label>
+      <input class="form-input" id="full_name" name="full_name" type="text"
+             value="{{ form.full_name|default('') }}" required maxlength="200">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="role">Роль</label>
+      <select class="form-input" id="role" name="role">
+        <option value="student"
+                {% if form.role|default('student') == 'student' %}selected{% endif %}>
+          студент
+        </option>
+        <option value="curator"
+                {% if form.role|default('') == 'curator' %}selected{% endif %}>
+          куратор
+        </option>
+      </select>
+      <p class="form-hint">Куратор сразу прикрепляется к этой группе.</p>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="member-email">e-mail</label>
+      <input class="form-input" id="member-email" name="email" type="email"
+             value="{{ form.email|default('') }}" required maxlength="254"
+             autocomplete="off">
+      <p class="form-hint">Уникален в пределах курса.</p>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="member-password">Пароль</label>
+      <input class="form-input" id="member-password" name="password" type="text"
+             value="{{ form.password|default('') }}" required autocomplete="off">
+      <p class="form-hint">
+        Не менее 5 символов. Администратор видит текущий пароль
+        участника и может выдать новый.
+      </p>
+    </div>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Добавить участника</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+{% if participants %}
+  <ul class="plain-list card-list">
+    {% for person in participants %}
+      <li class="card-row member-row">
+        <div class="card-row-main">
+          <p class="card-row-title">
+            {{ person.full_name }}
+            <span class="role-badge">{{ ROLES[person.role].label }}</span>
+            {% if not person.is_active %}
+              <span class="status-badge status-revision">Отключена</span>
+            {% endif %}
+          </p>
+          <p class="muted">{{ person.email }}</p>
+          {% if revealed.get(person.id) %}
+            <p class="password-line">
+              Пароль: <span class="mono">{{ revealed.get(person.id) }}</span>
+            </p>
+          {% endif %}
+        </div>
+
+        {% if is_admin %}
+        <div class="card-row-actions">
+          <form class="inline-form" method="post"
+                action="{{ url_for('admin_groups.member_password_view', group_id=group.id, user_id=person.id) }}">
+            <button class="button button-secondary" type="submit">
+              Показать пароль
+            </button>
+          </form>
+          <form class="inline-form" method="post"
+                action="{{ url_for('admin_groups.member_password_reissue', group_id=group.id, user_id=person.id) }}"
+                data-confirm="Выдать участнику новый пароль? Текущий пароль перестанет работать.">
+            <button class="button button-secondary" type="submit">
+              Выдать пароль повторно
+            </button>
+          </form>
+          {% if person.role == 'curator' %}
+            <form class="inline-form" method="post"
+                  action="{{ url_for('admin_groups.curator_detach', group_id=group.id, user_id=person.id) }}"
+                  data-confirm="Открепить куратора от группы?">
+              <button class="button button-secondary" type="submit">
+                Открепить куратора
+              </button>
+            </form>
+          {% else %}
+            <form class="inline-form" method="post"
+                  action="{{ url_for('admin_groups.member_remove', group_id=group.id, user_id=person.id) }}"
+                  data-confirm="Исключить участника из группы? Учётная запись будет отключена, прошлые работы сохранятся.">
+              <button class="button button-secondary button-danger" type="submit">
+                Исключить из группы
+              </button>
+            </form>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if is_admin %}
+        <details class="member-details">
+          <summary>Изменить данные участника</summary>
+          <form method="post"
+                action="{{ url_for('admin_groups.member_edit', group_id=group.id, user_id=person.id) }}"
+                novalidate>
+            <div class="form-field">
+              <label class="form-label" for="full_name_{{ person.id }}">ФИО</label>
+              <input class="form-input" id="full_name_{{ person.id }}" name="full_name"
+                     type="text" value="{{ person.full_name }}" required maxlength="200">
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="email_{{ person.id }}">e-mail</label>
+              <input class="form-input" id="email_{{ person.id }}" name="email"
+                     type="email" value="{{ person.email }}" required maxlength="254"
+                     autocomplete="off">
+            </div>
+            <p class="form-hint">
+              Роль и пароль здесь не меняются: роль определяет таблицу
+              членства, а пароль выдаётся отдельной операцией выше.
+            </p>
+            <div class="form-actions">
+              <button class="button" type="submit">Сохранить</button>
+            </div>
+          </form>
+        </details>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "partials/empty_state.html" with context %}
+{% endif %}
+
+{% if is_admin %}
+<section class="card">
+  <h3>Прикрепить куратора к группе</h3>
+  {% set free_curators = course_curators | rejectattr('id', 'in', attached_curator_ids) | list %}
+  {% if free_curators %}
+    <form method="post"
+          action="{{ url_for('admin_groups.curator_attach', group_id=group.id) }}">
+      <div class="form-field">
+        <label class="form-label" for="curator_id">Куратор курса</label>
+        <select class="form-input" id="curator_id" name="user_id" required>
+          {% for curator in free_curators %}
+            <option value="{{ curator.id }}">{{ curator.full_name }} ({{ curator.email }})</option>
+          {% endfor %}
+        </select>
+        <p class="form-hint">Один куратор может быть прикреплён к нескольким группам.</p>
+      </div>
+      <div class="form-actions">
+        <button class="button" type="submit">Прикрепить куратора</button>
+      </div>
+    </form>
+  {% else %}
+    <p class="muted">
+      Все активные кураторы курса уже прикреплены к этой группе. Чтобы
+      добавить нового, сначала заведите его как участника с ролью
+      «куратор».
+    </p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

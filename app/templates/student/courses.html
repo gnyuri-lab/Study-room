@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block page_title %}Мои курсы{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Мои курсы</h2>
+  <a class="button button-secondary" href="{{ url_for('index') }}">
+    В личный кабинет
+  </a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+{# AC-04, BR-28: курсы берутся по всем учётным записям человека —
+   один e-mail может быть заведён в двух курсах (FR-05), и оба
+   обязаны быть видны. #}
+{% if courses %}
+  <ul class="plain-list card-list">
+    {% for course in courses %}
+      <li class="card-row">
+        <div class="card-row-main">
+          <p class="card-row-title">
+            <a class="button button-secondary"
+               href="{{ url_for('student.assignments_list', course_id=course.id) }}">
+              {{ course.title }}
+            </a>
+          </p>
+          <p class="muted">
+            Заданий: {{ course.assignments_total }}
+            · на проверке: {{ course.on_check }}
+            · принято: {{ course.accepted }}
+            · на доработке: {{ course.revision }}
+          </p>
+        </div>
+        <div class="card-row-actions">
+          <a class="button"
+             href="{{ url_for('student.assignments_list', course_id=course.id) }}">
+            Задания
+          </a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">
+    Курсы появятся после того, как администратор заведёт вас в список.
+  </p>
+{% endif %}
+{% endblock %}

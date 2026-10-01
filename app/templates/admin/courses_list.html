@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_title %}Курсы{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Курсы</h2>
+  <a class="button" href="{{ url_for('admin_courses.course_create') }}">Создать курс</a>
+</div>
+
+{% set empty_key = 'admin_courses' %}
+{% set action_url = url_for('admin_courses.course_create') %}
+{% set action_label = 'Создать курс' %}
+{% include "partials/flash_messages.html" %}
+
+{% if courses %}
+  <ul class="plain-list card-list">
+    {% for course in courses %}
+      <li class="card-row">
+        <div class="card-row-main">
+          <p class="card-row-title">{{ course.title }}</p>
+          {% if course.description %}
+            <p class="muted">{{ course.description }}</p>
+          {% endif %}
+          <p class="muted">
+            групп — {{ course.groups_count }},
+            участников — {{ course.members_count }}
+          </p>
+        </div>
+        <div class="card-row-actions">
+          <a class="button button-secondary"
+             href="{{ url_for('admin_assignments.assignments_list', course_id=course.id) }}">
+            Задания
+          </a>
+          <a class="button button-secondary"
+             href="{{ url_for('admin_groups.groups_list', course_id=course.id) }}">
+            Группы и участники
+          </a>
+          <a class="button button-secondary"
+             href="{{ url_for('admin_courses.course_edit', course_id=course.id) }}">
+            Изменить курс
+          </a>
+          <a class="button button-secondary button-danger"
+             href="{{ url_for('admin_courses.course_delete', course_id=course.id) }}">
+            Удалить курс
+          </a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "partials/empty_state.html" with context %}
+{% endif %}
+{% endblock %}

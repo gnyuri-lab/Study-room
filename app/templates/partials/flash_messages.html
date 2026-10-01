@@ -1,0 +1,18 @@
+{# Сообщения формы или действия. Категории задаёт вызывающий код:
+   'error' — отказ с объяснением, 'info' — результат действия. #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-stack">
+      {% for category, message in messages %}
+        {% if category == 'error' %}
+          <p class="alert alert-error" role="alert">{{ message }}</p>
+        {% else %}
+          <p class="alert alert-info" role="status">{{ message }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% if error %}
+  <p class="alert alert-error" role="alert">{{ error }}</p>
+{% endif %}

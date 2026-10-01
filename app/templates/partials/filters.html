@@ -1,0 +1,63 @@
+{# Фильтры дашборда (FR-58). Одна форма на четыре поля: выбор в любом
+   из них сохраняет значения остальных, потому что браузер отправляет
+   все поля разом. Три поля — выпадающие списки (курс, группа, задание),
+   четвёртое — поиск студента по имени: свободный текст, но с полным
+   списком ФИО области под полем — при вводе букв показываются все
+   подходящие, и значение выбирается из списка (замечания заказчика
+   01.10.2026, формулировка FR-58 приведена к ним). Кнопка «Сбросить»
+   стоит у каждого применённого поля и передаёт имя только своего
+   ключа — сервер очистит ровно его (независимость сбросов, AC-41).
+   Без скриптов форма работает так же: filters.js отправляет её при
+   смене списка и подсказывает ФИО, а поиск применяется по Enter или
+   кнопкой «Применить». #}
+<form class="filters card" method="get" action="{{ url_for(request.endpoint) }}" data-filters>
+  <h3>Фильтры</h3>
+  <div class="filters-grid">
+    {% for field in dashboard.filters.fields %}
+    <div class="filters-field">
+      {% if field.type == 'search' %}
+        <label class="form-label" for="filter-{{ field.key }}">{{ field.label }}</label>
+        <div class="filters-suggest" data-suggest>
+          <input class="form-input" type="search" id="filter-{{ field.key }}"
+                 name="{{ field.key }}" value="{{ field.value }}"
+                 placeholder="{{ field.placeholder }}" autocomplete="off"
+                 role="combobox" aria-expanded="false" aria-autocomplete="list"
+                 aria-controls="filter-{{ field.key }}-list">
+          <ul class="filters-suggest-list" id="filter-{{ field.key }}-list"
+              role="listbox" aria-label="{{ field.label }}" hidden>
+            {% for option in field.options %}
+              <li class="filters-suggest-option" role="option"
+                  id="filter-{{ field.key }}-option-{{ loop.index }}"
+                  data-value="{{ option.value }}">{{ option.label }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <label class="form-label" for="filter-{{ field.key }}">{{ field.label }}</label>
+        <select class="form-input" id="filter-{{ field.key }}" name="{{ field.key }}">
+          <option value="">{{ field.empty }}</option>
+          {% for option in field.options %}
+            <option value="{{ option.value }}"{% if field.value == option.value %} selected{% endif %}>
+              {{ option.label }}
+            </option>
+          {% endfor %}
+        </select>
+      {% endif %}
+      {% if field.value %}
+        <button class="button button-secondary filters-reset" type="submit"
+                name="reset" value="{{ field.key }}">
+          Сбросить
+        </button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <button class="button" type="submit">Применить</button>
+    {% if dashboard.filters.active %}
+      <button class="button button-secondary" type="submit" name="reset" value="all">
+        Сбросить все
+      </button>
+    {% endif %}
+  </div>
+</form>

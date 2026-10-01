@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block page_title %}{{ status_code }} — {{ title }}{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>{{ status_code }} — {{ title }}</h2>
+  <p>{{ message }}</p>
+  <p><a class="button" href="{{ home_url }}">На главную</a></p>
+</section>
+{% endblock %}

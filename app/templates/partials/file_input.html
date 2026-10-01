@@ -1,0 +1,23 @@
+{# Поле выбора файлов. Подпись и подсказка о лимитах собраны здесь,
+     чтобы форма задания, форма сдачи и форма импорта не расходились
+     текстом. `multiple` даёт несколько файлов за один раз. Лимиты
+     в data-атрибутах нужны `attachments.js`: он подсказывает превышение
+     до отправки, но проверяет их сервер — подсказка не является
+     разрешением (FR-52, NFR-06). Вызывающий шаблон может передать
+     `max_files`: лимит материалов задания и лимит файлов работы —
+     разные константы, хотя сейчас и равны пяти. #}
+{% set _max_files = max_files | default(MAX_FILES_PER_ASSIGNMENT) | default(5) %}
+{% set _max_bytes = MAX_FILE_SIZE_BYTES | default(10485760) %}
+<div class="form-field">
+  <label class="form-label" for="{{ field_id | default('files') }}">
+    {{ label | default('Файлы') }}
+  </label>
+  <input class="form-input" id="{{ field_id | default('files') }}" name="files"
+         type="file" multiple
+         accept="{{ accept | default('.xlsx,.xls,.docx,.pdf,.csv,.txt,.md,.png,.jpg,.zip') }}"
+         data-max-files="{{ _max_files }}" data-max-bytes="{{ _max_bytes }}">
+  <p class="form-hint">
+    {{ hint | default('Не больше 5 файлов по 10 МБ. Разрешены: xlsx, xls, docx, pdf, csv, txt, md, png, jpg, zip.') }}
+  </p>
+  <p class="form-hint" data-file-summary hidden></p>
+</div>

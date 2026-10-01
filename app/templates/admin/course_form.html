@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block page_title %}{% if mode == 'create' %}Создание курса{% else %}Изменение курса{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{% if mode == 'create' %}Новый курс{% else %}{{ course.title }}{% endif %}</h2>
+  <a class="button button-secondary" href="{{ url_for('admin_courses.courses_list') }}">
+    К списку курсов
+  </a>
+</div>
+
+{% set empty_key = '' %}
+{% include "partials/flash_messages.html" %}
+
+<section class="card">
+  <form method="post" novalidate>
+    <div class="form-field">
+      <label class="form-label" for="title">Название курса</label>
+      <input class="form-input" id="title" name="title" type="text"
+             value="{{ form.title }}" required maxlength="200" autofocus>
+      <p class="form-hint">Не длиннее 200 символов.</p>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="description">Описание курса</label>
+      <textarea class="form-input" id="description" name="description"
+                rows="6">{{ form.description }}</textarea>
+      <p class="form-hint">Необязательное поле.</p>
+    </div>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Сохранить</button>
+      <a class="button button-secondary"
+         href="{{ url_for('admin_courses.course_edit', course_id=course.id) if mode == 'edit'
+                    else url_for('admin_courses.courses_list') }}">Отмена</a>
+    </div>
+  </form>
+</section>
+
+{% if mode == 'edit' %}
+  <section class="card">
+    <h3>Другие действия с курсом</h3>
+    <div class="form-actions">
+      <a class="button button-secondary"
+         href="{{ url_for('admin_assignments.assignments_list', course_id=course.id) }}">
+        Задания
+      </a>
+      <a class="button button-secondary"
+         href="{{ url_for('admin_groups.groups_list', course_id=course.id) }}">
+        Группы и участники
+      </a>
+      <a class="button button-secondary button-danger"
+         href="{{ url_for('admin_courses.course_delete', course_id=course.id) }}">
+        Удалить курс
+      </a>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

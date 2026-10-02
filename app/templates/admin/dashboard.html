@@ -56,6 +56,13 @@
   <p class="alert alert-error" role="alert">{{ MESSAGES['dashboard_filter_invalid'] }}</p>
 {% endif %}
 
+{# Выгрузка ведомости (FR-72): ссылка несёт текущие фильтры, поэтому
+   файл повторяет экран. Кнопка стоит до ветки «нет данных»: пустая
+   выборка тоже выгружается — файл с заголовками и нулями. #}
+<p class="form-actions">
+  <a class="button button-secondary" href="{{ export_url }}">Выгрузить ведомость</a>
+</p>
+
 {% if not dashboard.has_data %}
   {% set empty_key = 'dashboard_filtered' if dashboard.filtered else 'dashboard' %}
   {% set action_url = '' %}

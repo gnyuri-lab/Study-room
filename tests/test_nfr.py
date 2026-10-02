@@ -285,7 +285,7 @@ class TestNfr09NoSensitiveFields:
 
 
 class TestNfr10RuleCoverage:
-    """NFR-10: автотесты упоминают все BR-01…BR-33 и команду pytest."""
+    """NFR-10: автотесты упоминают все BR-01…BR-38 и команду pytest."""
 
     def test_every_business_rule_is_referenced_in_tests(self):
         corpus = "\n".join(
@@ -294,7 +294,7 @@ class TestNfr10RuleCoverage:
         )
         missing = [
             "BR-{0:02d}".format(index)
-            for index in range(1, 34)
+            for index in range(1, 39)
             if "BR-{0:02d}".format(index) not in corpus
         ]
         assert missing == []

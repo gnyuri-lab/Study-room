@@ -11,8 +11,8 @@ SECRET_KEY_PATH = VAR_DIR / "secret.key"
 
 APP_NAME = "Study room"
 APP_TITLE = "Study room / Учебный кабинет"
-STAGE = "Э-9"
-APP_VERSION = "0.9.0"
+STAGE = "Э-11"
+APP_VERSION = "0.11.0"
 
 DEBUG = False
 TESTING = False
@@ -34,9 +34,30 @@ PASSWORD_MIN_LENGTH_DEFAULT = 5
 SUBMISSION_ATTEMPT_LIMIT = 3
 
 MAX_FILE_SIZE_BYTES = 10_485_760
+
+#: Резервная копия базы (Э-10). Файл — один JSON с таблицами и
+#: файлами вложений, поэтому его предел больше лимита вложений
+#: NFR-06: 256 МБ покрывает и базу, и файлы даже по максимуму
+#: (10 МБ × 5 файлов × до 5 вложений на каждую строку трёх таблиц).
+BACKUP_MAX_BYTES = 256 * 1024 * 1024
+
+#: Подкаталог для незавершённой загрузки копии — внутри ``VAR_DIR``:
+#: это состояние одной сессии, а не данные приложения (NFR-08).
+#: Путь собирается при обращении, а не здесь, чтобы тесты,
+#: подменяющие ``VAR_DIR``, получали своё значение.
+BACKUP_STAGING_SUBDIR = "backup_staging"
+
 MAX_FILES_PER_ASSIGNMENT = 5
 MAX_FILES_PER_SUBMISSION = 5
 MAX_FILES_PER_COMMENT = 5
+
+#: Выгрузка ведомости успеваемости (Э-11, FR-72). Имя файла —
+#: ``vedomost_[курс]_[группа]_[ФИО-подстрока]_[ДД.ММ.ГГГГ].xlsx`` либо
+#: ``vedomost_full_ДД.ММ.ГГГГ.xlsx`` без фильтров; предел длины
+#: удерживает имя в лимите Windows, сохраняя дату в конце.
+GRADEBOOK_FILENAME_PREFIX = "vedomost"
+GRADEBOOK_FILENAME_EMPTY = "full"
+GRADEBOOK_FILENAME_MAX = 120
 ALLOWED_FILE_EXTENSIONS = (
     "xlsx",
     "xls",
@@ -161,6 +182,9 @@ ACTION_CODES = (
     "submission.review_reverted",
     "file.downloaded",
     "file.deleted",
+    # Этап Э-10 (FR-68, FR-69): экспорт и восстановление базы.
+    "backup.exported",
+    "backup.restored",
 )
 
 ENTITY_TYPES = (
@@ -171,6 +195,8 @@ ENTITY_TYPES = (
     "user",
     "file",
     "import",
+    # Этап Э-10: объект журнала — сама база данных (FR-68, FR-69).
+    "backup",
 )
 
 ENTITY_TYPE_LABELS = {
@@ -181,6 +207,7 @@ ENTITY_TYPE_LABELS = {
     "user": "Учётная запись",
     "file": "Файл",
     "import": "Импорт",
+    "backup": "Резервная копия",
 }
 
 MESSAGES = {
@@ -343,6 +370,27 @@ MESSAGES = {
     "audit_filter_invalid": (
         "Некорректное значение фильтра: показан пустой результат."
     ),
+    # Тексты ниже добавлены на этапе Э-10 (резервные копии, FR-68…FR-71).
+    # Все внесены в §9.3 отдельной правкой ТЗ вместе с текстом
+    # предупреждения «Текущие данные будут полностью заменены» — так же,
+    # как тексты Э-6. Держать их здесь же — чтобы сообщение на экране и
+    # формулировка в ТЗ совпадали слово в слово.
+    "backup_no_file": "Выберите файл резервной копии (.json).",
+    "backup_invalid": (
+        "Файл не является резервной копией: повреждён или имеет "
+        "неверную структуру."
+    ),
+    "backup_version": (
+        "Версия схемы в копии ({file}) не совпадает с текущей ({current})."
+    ),
+    "backup_too_large": (
+        "Файл резервной копии превышает допустимые {limit} МБ."
+    ),
+    "backup_session_expired": (
+        "Файл резервной копии устарел. Загрузите его заново."
+    ),
+    "backup_restored": "Резервная копия восстановлена. Войдите заново.",
+    "backup_failed": "Не удалось восстановить копию: данные не изменены.",
 }
 
 EMPTY_STATES = {

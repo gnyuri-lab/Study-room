@@ -24,6 +24,7 @@ from flask import (
 from app import access
 from app.services import ServiceError, courses as courses_service
 from app.services import dashboard as dashboard_service
+from app.services import gradebook as gradebook_service
 
 bp = Blueprint("admin_courses", __name__, url_prefix="/admin")
 
@@ -32,11 +33,26 @@ def _actor():
     return access.current_user()
 
 
+def _export_args() -> dict:
+    """Текущие фильтры дашборда для ссылки выгрузки (FR-72).
+
+    Как в журнале (``admin_audit._export_url``): ссылка несёт только
+    применённые значения, параметр ``reset`` не нужен — он очищает
+    поле при отправке формы, а не при чтении файла. Пустые значения
+    пропускаются, чтобы в URL не копились пустые ключи.
+    """
+    return {
+        key: value
+        for key, value in request.args.to_dict().items()
+        if key in dashboard_service.FILTER_KEYS and value
+    }
+
+
 @bp.get("/dashboard")
 @access.admin_required
 def dashboard():
     """Сводные показатели, диаграмма и разрезы по всем курсам
-    (FR-55, FR-57, FR-60, AC-41).
+    (FR-55, FR-57…FR-60, AC-41).
 
     Фильтры читаются из строки запроса и применяются одновременно
     (FR-58): маршрут их не валидирует, это работа сервиса — он же
@@ -45,6 +61,21 @@ def dashboard():
     return render_template(
         "admin/dashboard.html",
         dashboard=dashboard_service.build(_actor(), request.args),
+        export_url=url_for("admin_courses.dashboard_export", **_export_args()),
+    )
+
+
+@bp.get("/dashboard/export")
+@access.admin_required
+def dashboard_export():
+    """Выгрузка ведомости текущей выборки в XLSX (FR-72, AC-46).
+
+    Ссылка на кнопке несёт применённые фильтры, поэтому файл
+    повторяет то, что видно на экране (BR-38) — тот же приём, что у
+    выгрузки журнала (AC-32). Записи в журнале действий нет (FR-72).
+    """
+    return gradebook_service.download(
+        dashboard_service.build(_actor(), request.args)
     )
 
 

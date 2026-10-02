@@ -229,6 +229,8 @@ ACTION_LABELS: dict[str, str] = {
     "submission.review_reverted": "Отзыв проверки",
     "file.downloaded": "Файл скачан",
     "file.deleted": "Файл удалён",
+    "backup.exported": "Экспорт базы JSON",
+    "backup.restored": "Восстановление базы",
 }
 
 #: Физическое удаление там, где в §7.12 нет отдельного кода: группа и

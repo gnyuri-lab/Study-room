@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block page_title %}Предпросмотр резервной копии{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Предпросмотр резервной копии</h2>
+  <a class="button button-secondary"
+     href="{{ url_for('admin_backup.index') }}">Назад</a>
+</div>
+
+<p class="alert alert-info" role="status">
+  Это предпросмотр: данные пока не изменены.
+  Записей: <strong>{{ summary.records }}</strong>,
+  файлов: {{ summary.files }}.
+</p>
+
+<section class="card">
+  <h3>{{ summary.file_name }}</h3>
+  <p class="muted">
+    Версия схемы: {{ summary.schema_version }} ·
+    экспортирована: {{ summary.exported_at }}
+  </p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th scope="col">Таблица</th>
+        <th scope="col">Записей</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for table in table_order %}
+        <tr>
+          <td>{{ table_labels[table] }}</td>
+          <td>{{ summary.counts[table] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h3>Подтверждение</h3>
+  <p class="alert alert-error" role="alert">
+    Текущие данные будут полностью заменены.
+  </p>
+  <p class="muted">
+    Восстановление заменит все таблицы базы и файлы вложений данными
+    этой копии. Отменить его после подтверждения будет нельзя.
+    Максимальный размер файла — {{ limit_mb }} МБ.
+  </p>
+  <div class="form-actions">
+    <form class="inline-form" method="post"
+          action="{{ url_for('admin_backup.restore') }}"
+          data-confirm="Текущие данные будут полностью заменены. Восстановить резервную копию?">
+      <button class="button button-danger" type="submit">
+        Восстановить резервную копию
+      </button>
+    </form>
+    <form class="inline-form" method="get"
+          action="{{ url_for('admin_backup.index') }}">
+      <button class="button button-secondary" type="submit">Отменить</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

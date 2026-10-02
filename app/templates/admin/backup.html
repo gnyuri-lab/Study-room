@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block page_title %}Резервные копии{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Резервные копии базы</h2>
+  <a class="button button-secondary" href="{{ url_for('index') }}">В кабинет</a>
+</div>
+
+{% include "partials/flash_messages.html" %}
+
+<section class="card">
+  <h3>Экспорт базы JSON</h3>
+  <p class="muted">
+    Один файл со всеми таблицами базы и файлами вложений: работы,
+    материалы заданий и комментарии уходят внутри файла в формате
+    base64. Пароли выгружаются так, как хранятся — зашифрованными;
+    ключ шифрования в файл не входит.
+  </p>
+  <form method="get" action="{{ url_for('admin_backup.export') }}">
+    <div class="form-actions">
+      <button class="button" type="submit">Экспорт базы JSON</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h3>Восстановление из резервной копии</h3>
+  <p class="alert alert-error" role="alert">
+    Текущие данные будут полностью заменены.
+  </p>
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('admin_backup.preview') }}" novalidate>
+    <div class="form-field">
+      <label class="form-label" for="backup-file">Файл резервной копии</label>
+      <input class="form-input" id="backup-file" name="file" type="file"
+             accept=".json,application/json" required>
+      <p class="form-hint">
+        Только файл .json, экспортированный этой же системой. Максимальный
+        размер — {{ limit_mb }} МБ.
+      </p>
+    </div>
+    <div class="form-actions">
+      <button class="button" type="submit">Показать содержимое копии</button>
+    </div>
+  </form>
+  <p class="form-hint">
+    Сначала показывается предпросмотр с составом таблиц. До
+    подтверждения данные не меняются.
+  </p>
+</section>
+{% endblock %}

@@ -38,6 +38,7 @@ from app.services import ServiceError
 from app.services import assignments as assignments_service
 from app.services import comments as comments_service
 from app.services import dashboard as dashboard_service
+from app.services import gradebook as gradebook_service
 from app.services import groups as groups_service
 from app.services import members as members_service
 from app.services import statuses as statuses_service
@@ -107,6 +108,32 @@ def dashboard():
     return render_template(
         "curator/dashboard.html",
         dashboard=dashboard_service.build(access.current_user(), request.args),
+        export_url=url_for("curator.dashboard_export", **_export_args()),
+    )
+
+
+def _export_args() -> dict:
+    """Текущие фильтры дашборда для ссылки выгрузки (FR-72) —
+    тот же состав, что у ``admin_courses._export_args``: ссылка
+    несёт только применённые значения, без параметра ``reset``."""
+    return {
+        key: value
+        for key, value in request.args.to_dict().items()
+        if key in dashboard_service.FILTER_KEYS and value
+    }
+
+
+@bp.get("/dashboard/export")
+@access.staff_required
+def dashboard_export():
+    """Выгрузка ведомости текущей выборки в XLSX (FR-72, AC-47).
+
+    Область видимости считает тот же сервис, что и экран: файл
+    куратора ограничен его группами (BR-38), чужой студент в него не
+    попадает. Записи в журнале действий нет (FR-72).
+    """
+    return gradebook_service.download(
+        dashboard_service.build(access.current_user(), request.args)
     )
 
 

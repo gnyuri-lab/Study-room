@@ -8,6 +8,7 @@
 """
 
 from typing import Any
+from pathlib import Path
 
 from flask import Flask, current_app, redirect, render_template, render_template_string, request, url_for
 from jinja2 import TemplateNotFound
@@ -68,6 +69,9 @@ CABINET_TEMPLATE = """{% extends "base.html" %}
       </a>
       <a class="button button-secondary" href="{{ url_for('admin_audit.index') }}">
         Журнал действий
+      </a>
+      <a class="button button-secondary" href="{{ url_for('admin_backup.index') }}">
+        Резервные копии
       </a>
     {% endif %}
     {% if user['role'] == 'curator' %}
@@ -190,7 +194,7 @@ CABINET_TEMPLATE = """{% extends "base.html" %}
 
 <section class="card">
   <h3>Пилот собран</h3>
-  <p class="muted">Все этапы Э-0…Э-9 выполнены. Демо-данные создаёт
+   <p class="muted">Все этапы Э-0…Э-11 выполнены. Демо-данные создаёт
     команда <code>python -m app.cli seed-demo</code>.</p>
 </section>
 {% endblock %}
@@ -222,6 +226,7 @@ def create_app(overrides: dict[str, Any] | None = None) -> Flask:
 
     _apply_session_settings(app)
     db.init_app(app)
+    _apply_startup_migrations(app)
     _register_template_globals(app)
     _register_context_processors(app)
     _register_blueprints(app)
@@ -230,6 +235,28 @@ def create_app(overrides: dict[str, Any] | None = None) -> Flask:
     _register_cabinet(app)
 
     return app
+
+
+# --------------------------------------------------------------------------
+# Схема
+# --------------------------------------------------------------------------
+
+
+def _apply_startup_migrations(app: Flask) -> None:
+    """Довести существующую базу до последней миграции при старте.
+
+    §12.1: миграции применяются при старте. Без этого база, созданная на
+    ранних этапах (например, версии 3 с Э-9), остаётся со старым
+    CHECK-ограничением журнала, и экспорт резервной копии (Э-10) падает
+    с 500 на вставке `backup.exported`. Отсутствующую базу не создаём:
+    её готовит «python -m app.cli init-db».
+    """
+    database = Path(app.config.get("DB_PATH") or config.DB_PATH)
+    if not database.is_file():
+        return
+    migrations = Path(app.config.get("MIGRATIONS_DIR") or config.MIGRATIONS_DIR)
+    with app.app_context():
+        db.init_database(db_path=database, migrations_dir=migrations)
 
 
 # --------------------------------------------------------------------------

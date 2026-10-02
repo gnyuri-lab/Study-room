@@ -143,10 +143,65 @@ def insert_file(conn, table, parent_column, parent_id, stored_name, uploaded_by=
 
 class TestMigrations:
     def test_applies_all_migrations(self, connection):
-        assert db.applied_version(connection) == 3
+        assert db.applied_version(connection) == 4
 
     def test_second_run_is_idempotent(self, connection):
         assert db.apply_migrations(connection) == []
+
+    def test_startup_applies_pending_migrations(self, workspace, key_path, tmp_path):
+        # База уровня Э-9 (001—003, версия 3) без кодов журнала Э-10:
+        # до правки такой базе create_app не помогал, и экспорт резервной
+        # копии падал 500 на CHECK ограничения action (§12.1 «применяются
+        # при старте»).
+        legacy = tmp_path / "legacy-migrations"
+        legacy.mkdir()
+        for name in ("001_schema.sql", "002_indexes.sql", "003_comment_files.sql"):
+            (legacy / name).write_text(
+                (config.MIGRATIONS_DIR / name).read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+        db.init_database(db_path=config.DB_PATH, migrations_dir=legacy)
+
+        connection = sqlite3.connect(config.DB_PATH, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        assert db.applied_version(connection) == 3
+        stale_sql = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE name = 'action_log'"
+        ).fetchone()["sql"]
+        assert "backup.exported" not in stale_sql
+        connection.close()
+
+        from app import create_app
+
+        application = create_app()
+
+        connection = sqlite3.connect(config.DB_PATH, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        assert db.applied_version(connection) == 4
+        actual_sql = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE name = 'action_log'"
+        ).fetchone()["sql"]
+        assert "backup.exported" in actual_sql
+        connection.close()
+
+        # Журнал Э-10 на такой базе записывается, а не роняет IntegrityError.
+        from app import action_log
+
+        with application.app_context():
+            action_log.log_action(
+                action="backup.exported",
+                actor_id=None,
+                actor_role="admin",
+                entity_type="backup",
+                details={"records": 0, "files": 0},
+            )
+
+    def test_startup_does_not_create_missing_database(self, workspace, key_path):
+        from app import create_app
+
+        assert not config.DB_PATH.exists()
+        create_app()
+        assert not config.DB_PATH.exists()
 
     def test_rejects_schema_newer_than_scripts(self, connection, tmp_path):
         connection.execute("PRAGMA user_version = 99")
@@ -158,7 +213,7 @@ class TestMigrations:
 
     def test_rejects_database_newer_than_migration_set(self, tmp_path):
         # Отметка 1 при схеме уровня 002: 001 пропускается, а оставшиеся
-        # скрипты (002 — он идемпотентен, и 003) применяются по порядку.
+        # скрипты (002 — он идемпотентен, 003 и 004) применяются по порядку.
         # Базу собираем вручную из копий 001 и 002: на готовой схеме 003
         # повторно не пройдёт, а миграции применяются только вперёд.
         directory = tmp_path / "two"
@@ -180,6 +235,7 @@ class TestMigrations:
             assert db.apply_migrations(scratch) == [
                 "002_indexes.sql",
                 "003_comment_files.sql",
+                "004_action_log_codes.sql",
             ]
         finally:
             scratch.close()
@@ -721,7 +777,7 @@ class TestActionLog:
                 "entity_type, created_at) VALUES (?, 'admin', 'auth.login', ?, ?)",
                 (self.admin, entity, "2026-01-01T00:00:00Z"),
             )
-        assert len(config.ENTITY_TYPES) == 7
+        assert len(config.ENTITY_TYPES) == 8
 
     def test_unknown_entity_type_rejected(self, base):
         with pytest.raises(sqlite3.IntegrityError):
@@ -966,6 +1022,7 @@ class TestCli:
         assert "001_schema.sql" in out
         assert "002_indexes.sql" in out
         assert "003_comment_files.sql" in out
+        assert "004_action_log_codes.sql" in out
 
     def test_init_db_second_run_is_idempotent(self, workspace, capsys):
         from app import cli
@@ -1140,7 +1197,7 @@ class TestAppStillWorks:
         client.get("/login")
         with client.application.app_context():
             connection = db.get_db()
-            assert db.applied_version(connection) == 3
+            assert db.applied_version(connection) == 4
             assert conn_count(connection, "SELECT COUNT(*) FROM users") == 0
 
 

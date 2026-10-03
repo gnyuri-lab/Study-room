@@ -12,7 +12,7 @@ SECRET_KEY_PATH = VAR_DIR / "secret.key"
 APP_NAME = "Study room"
 APP_TITLE = "Study room / Учебный кабинет"
 STAGE = "Э-11"
-APP_VERSION = "0.11.0"
+APP_VERSION = "0.11.1"
 
 DEBUG = False
 TESTING = False

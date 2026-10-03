@@ -173,6 +173,8 @@ def _child_of(directory: Path, name: str) -> Path:
     файла уйти за пределы каталога.
     """
     root = directory.resolve()
+    if not name or "/" in name or "\\" in name or name in {".", ".."}:
+        raise ServiceError(config.MESSAGES["not_found"])
     target = (root / name).resolve()
     if target.parent != root:
         raise ServiceError(config.MESSAGES["not_found"])
